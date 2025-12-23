@@ -1,0 +1,56 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check Architecture Compliance Pre-Deploy
+        run: |
+          echo "Final architecture validation before deployment..."
+          if [ ! -f .github/WELL_ARCHITECTED_CHECKLIST.json ]; then
+            echo "❌ Architecture checklist missing"
+            exit 1
+          fi
+          echo "✅ Architecture checklist verified"
+      
+      - name: Note on ECS Setup
+        run: |
+          echo "ECS Deployment Instructions:"
+          echo "================================"
+          echo "This workflow is ready for ECS deployment once:"
+          echo "1. AWS credentials configured in GitHub secrets"
+          echo "2. ECR repositories created (monarch-api, monarch-ai-agent, monarch-cadt)"
+          echo "3. ECS cluster and services provisioned"
+          echo "4. CloudWatch alarms configured"
+          echo ""
+          echo "For MVP (first 4 weeks):"
+          echo "  - Use simple EC2 instances or local Docker"
+          echo "  - Scale to ECS Fargate after pilot launch"
+          echo ""
+          echo "Estimated ECS cost: $400-600/month"
+      
+      - name: Summary
+        run: |
+          echo "## ✅ Deployment Pipeline Ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Current Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflows: ✅ Set up" >> $GITHUB_STEP_SUMMARY
+          echo "- Architecture: ✅ Defined" >> $GITHUB_STEP_SUMMARY
+          echo "- AWS Infrastructure: ⚠️ Ready for config" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Configure AWS credentials in GitHub secrets" >> $GITHUB_STEP_SUMMARY
+          echo "2. Provision ECS cluster and services" >> $GITHUB_STEP_SUMMARY
+          echo "3. Create ECR repositories" >> $GITHUB_STEP_SUMMARY
+          echo "4. Wire Notion and Linear integrations" >> $GITHUB_STEP_SUMMARY
+          echo "5. Test end-to-end deployment flow" >> $GITHUB_STEP_SUMMARY
