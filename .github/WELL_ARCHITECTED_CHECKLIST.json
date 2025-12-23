@@ -1,0 +1,184 @@
+{
+  "version": "2.0",
+  "last_updated": "2025-12-23",
+  "project": "Monarch Nexus v2.0",
+  "philosophy": "MVP-first with production patterns enforced by CI/CD",
+  "compliance_gates": {
+    "security": {
+      "required": true,
+      "checks": [
+        {
+          "id": "SEC-001",
+          "name": "HTTPS Only",
+          "description": "All API endpoints must use HTTPS",
+          "validation": "grep -r 'http://' services/ --exclude-dir=node_modules && exit 1 || exit 0",
+          "status": "enforced"
+        },
+        {
+          "id": "SEC-002",
+          "name": "Secrets Management",
+          "description": "No hardcoded credentials in code",
+          "validation": "python3 .github/scripts/detect-secrets.py",
+          "status": "enforced"
+        },
+        {
+          "id": "SEC-003",
+          "name": "Dependency Scanning",
+          "description": "No high/critical CVEs in dependencies",
+          "validation": "trivy scan",
+          "status": "enforced"
+        }
+      ]
+    },
+    "reliability": {
+      "required": true,
+      "checks": [
+        {
+          "id": "REL-001",
+          "name": "Circuit Breaker",
+          "description": "CADT connector has circuit breaker for Chia node failures",
+          "validation": "grep -r 'CircuitBreaker' services/cadt-connector/",
+          "status": "in_progress"
+        },
+        {
+          "id": "REL-002",
+          "name": "Retry Logic",
+          "description": "Exponential backoff (1s, 2s, 4s, 8s, 16s) for external APIs",
+          "validation": "pytest tests/integration/test_retries.py",
+          "status": "in_progress"
+        },
+        {
+          "id": "REL-003",
+          "name": "Health Checks",
+          "description": "All services have /health endpoint with liveness checks",
+          "validation": "python3 .github/scripts/check-health-endpoints.py",
+          "status": "enforced"
+        }
+      ]
+    },
+    "performance": {
+      "required": true,
+      "checks": [
+        {
+          "id": "PERF-001",
+          "name": "API Response Time",
+          "description": "P95 latency < 500ms (target: < 200ms)",
+          "validation": "python3 .github/scripts/check-latency.py --p95 500",
+          "status": "monitoring"
+        },
+        {
+          "id": "PERF-002",
+          "name": "Database Connections",
+          "description": "Connection pooling configured (pool_size, max_overflow)",
+          "validation": "grep -r 'pool_size' services/",
+          "status": "enforced"
+        }
+      ]
+    },
+    "cost_optimization": {
+      "required": true,
+      "checks": [
+        {
+          "id": "COST-001",
+          "name": "ECS Task Right-Sizing",
+          "description": "CPU/memory not overprovisioned (monitor CloudWatch)",
+          "validation": "python3 .github/scripts/analyze-ecs-utilization.py",
+          "status": "advisory"
+        },
+        {
+          "id": "COST-002",
+          "name": "AI Agent Cost",
+          "description": "LLM costs < $100/month (OpenAI + Anthropic)",
+          "validation": "python3 .github/scripts/check-agent-cost.py --max 100",
+          "status": "enforced"
+        }
+      ]
+    },
+    "observability": {
+      "required": true,
+      "checks": [
+        {
+          "id": "OBS-001",
+          "name": "CloudWatch Alarms",
+          "description": "Critical metrics (error rate, latency, CADT sync lag) have alarms",
+          "validation": "aws cloudwatch describe-alarms --region us-east-1",
+          "status": "in_progress"
+        },
+        {
+          "id": "OBS-002",
+          "name": "LangSmith Tracing",
+          "description": "All AI agent calls traced in LangSmith",
+          "validation": "grep -r 'LANGSMITH_API_KEY' services/ai-agent/",
+          "status": "enforced"
+        }
+      ]
+    }
+  },
+  "deployment_checklist": {
+    "pre_deployment": [
+      "All architecture compliance gates passed",
+      "Security scan completed (trivy, secrets detection)",
+      "Unit tests pass (>80% coverage)",
+      "Integration tests pass (CADT, AI agent, API)",
+      "Code review approved",
+      "Linear issue linked and status 'In Review'"
+    ],
+    "deployment": [
+      "Build Docker images (API, AI Agent, CADT Connector)",
+      "Push to ECR",
+      "Update ECS task definitions",
+      "Force new deployment on ECS services",
+      "Monitor CloudWatch for errors"
+    ],
+    "post_deployment": [
+      "Verify health checks pass",
+      "Close Linear issues",
+      "Update Notion Architecture Registry with deployment date",
+      "Monitor metrics for 30 minutes"
+    ]
+  },
+  "architecture_systems": [
+    {
+      "name": "FastAPI Gateway",
+      "tier": "Application",
+      "critical": true,
+      "healthcheck": "GET /health",
+      "alerts": ["error_rate > 1%", "latency_p95 > 500ms"]
+    },
+    {
+      "name": "LangChain AI Agent",
+      "tier": "Intelligence",
+      "critical": true,
+      "healthcheck": "GET /agent/health",
+      "alerts": ["latency > 5s", "fallback_triggered", "cost > $5/hr"]
+    },
+    {
+      "name": "CADT Connector",
+      "tier": "Carbon",
+      "critical": true,
+      "healthcheck": "Chia node /health",
+      "alerts": ["sync_lag > 5min", "circuit_breaker_open", "queue_depth > 1000"]
+    },
+    {
+      "name": "Biomass Calculator",
+      "tier": "Carbon",
+      "critical": false,
+      "healthcheck": "GET /calculator/health",
+      "alerts": ["calculation_failed"]
+    },
+    {
+      "name": "PostgreSQL RDS",
+      "tier": "Data",
+      "critical": true,
+      "healthcheck": "RDS enhanced monitoring",
+      "alerts": ["cpu > 80%", "connections > 90%", "replication_lag > 1s"]
+    },
+    {
+      "name": "AWS ECS Fargate",
+      "tier": "Infrastructure",
+      "critical": true,
+      "healthcheck": "ECS task status",
+      "alerts": ["task_failed", "desired != running", "oom_killed"]
+    }
+  ]
+}
