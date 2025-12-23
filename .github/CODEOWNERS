@@ -1,0 +1,31 @@
+# CODEOWNERS for Monarch Nexus v2.0
+# GitHub will automatically request reviews from these users/teams
+
+# Global owner
+* @Garrettc123
+
+# API and AI Services
+/services/api/ @Garrettc123
+/services/ai-agent/ @Garrettc123
+/services/biomass-calculator/ @Garrettc123
+/tests/unit/api/ @Garrettc123
+/tests/ai-agent/ @Garrettc123
+
+# CADT and Carbon Services
+/services/cadt-connector/ @Garrettc123
+/tests/integration/cadt/ @Garrettc123
+
+# Infrastructure
+/infrastructure/ @Garrettc123
+/terraform/ @Garrettc123
+/docker/ @Garrettc123
+
+# Architecture and Compliance
+/.github/workflows/ @Garrettc123
+/.github/WELL_ARCHITECTED_CHECKLIST.json @Garrettc123
+/.github/CODEOWNERS @Garrettc123
+/docs/INTEGRATION_PLAN.md @Garrettc123
+
+# Deployment and Operations
+/docs/RUNBOOKS.md @Garrettc123
+/docs/ADR/ @Garrettc123
